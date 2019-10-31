@@ -32,6 +32,21 @@ Vue.component('product', {
                 Add to Cart</button>
                
             </div>
+            
+            <div>
+                <h2>Reviews</h2>
+                <p v-if="!reviews.length">There are no reviews yet</p>
+                <ul>
+                    <li v-for="review in reviews">
+                    <p>{{review.name}}</p>
+                    <p>Ratting: {{review.rating}}</p>
+                    <p>{{review.review}}</p>
+                    </li>
+
+                </ul>
+            </div>
+
+            <product-review @review-submitted="addReview"></product-review>
         </div>
     
     `,
@@ -56,6 +71,7 @@ Vue.component('product', {
                     variantQuantity: 0
                 },
             ],
+            reviews: []
         }
     },
     methods: {
@@ -66,6 +82,9 @@ Vue.component('product', {
         updateProduct: function(index) {
             this.selectedVaraint = index
             console.log(index)
+        },
+        addReview(productReview) {
+            this.reviews.push(productReview)
         }
     },
     computed: {
@@ -87,6 +106,74 @@ Vue.component('product', {
     }
 })
 
+//the .prevent stops the default behaviour of the button to refresh the page
+//the is an easier way do deal with form validation errors e.g data property name: we just added the word required in the p tag
+Vue.component('product-review', {
+    template: `
+    <form class="review-form" @submit.prevent="onSubmit">
+
+    <p v-if="errors.length">
+    <b>Please correct the following error(s):</b>
+    <ul>
+    <li v-for="error in errors">{{error}}</li>
+    </ul>
+    </p>
+
+    <p>
+        <label for="name">Name:</label>
+        <input id="name" v-model="name" required>
+    </p>    
+
+    <p>
+        <label for="review">Review:</label>
+        <textarea id="review" v-model=review></textarea>
+    </p>        
+
+    <p>
+        <label for="rating">Rating:</label>
+
+        <select id="rating" v-model.number="rating">
+        <option>5</option>
+        <option>4</option>
+        <option>3</option>
+        <option>2</option>
+        <option>1</option>
+        </select>
+    </p>
+
+    <p>
+        <input type="submit" value="Submit">
+    </p>
+    </form>
+    `,
+    data() {
+        return {
+            name: null,
+            review: null,
+            rating: null,
+            errors: []
+        }
+    },
+    methods: {
+        onSubmit() {
+            if (this.review && this.rating) {
+                let productReview = {
+                        name: this.name,
+                        review: this.review,
+                        rating: this.rating
+                    }
+                    //using $emit to send up the productReview variable to parent component, using newly created review-submitted to go there
+                this.$emit('review-submitted', productReview)
+                this.name = null,
+                    this.review = null,
+                    this.rating = null
+            } else {
+                if (!this.review) this.errors.push("Review required")
+                if (!this.rating) this.errors.push("Rating required")
+            }
+        }
+    }
+})
 
 var app = new Vue({
     el: '#app',
